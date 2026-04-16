@@ -12,7 +12,9 @@ from app.schemas.schemas import (
     PortariaCreate,
     PortariaUpdate,
     RelacaoCreate,
+    RelacaoUpdate,
     ArtigoCreate,
+    ArtigoUpdate,
 )
 
 
@@ -188,6 +190,20 @@ async def create_relacao(db: Session, relacao: RelacaoCreate) -> Relacao:
     return db_relacao
 
 
+async def get_relacao(db: Session, relacao_id: int) -> Optional[Relacao]:
+    """
+    Get a relationship by ID.
+    
+    Args:
+        db: Database session
+        relacao_id: Relationship ID to retrieve
+        
+    Returns:
+        Relacao instance or None if not found
+    """
+    return db.query(Relacao).filter(Relacao.id == relacao_id).first()
+
+
 async def get_relacoes_portaria(
     db: Session, portaria_id: int, direcao: str = "both"
 ) -> List[Relacao]:
@@ -230,8 +246,8 @@ async def list_relacoes(
         skip: Number of records to skip
         limit: Maximum number of records
         
-    Returns:
-        List of Relacao instances
+    Retorna:
+        Lista das instâncias Relacao
     """
     query = db.query(Relacao)
     
@@ -243,7 +259,7 @@ async def list_relacoes(
 
 async def delete_relacao(db: Session, relacao_id: int) -> bool:
     """
-    Delete a relationship.
+    Deleta o relacionamento.
     
     Args:
         db: Database session
@@ -260,6 +276,35 @@ async def delete_relacao(db: Session, relacao_id: int) -> bool:
     db.delete(db_relacao)
     db.commit()
     return True
+
+
+async def update_relacao(
+    db: Session, relacao_id: int, relacao_update: RelacaoUpdate
+) -> Optional[Relacao]:
+    """
+    Update a relationship.
+    
+    Args:
+        db: Database session
+        relacao_id: Relationship ID to update
+        relacao_update: RelacaoUpdate schema with fields to update
+        
+    Returns:
+        Updated Relacao instance or None if not found
+    """
+    db_relacao = await get_relacao(db, relacao_id)
+    
+    if not db_relacao:
+        return None
+    
+    # Update only provided fields
+    update_data = relacao_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_relacao, key, value)
+    
+    db.commit()
+    db.refresh(db_relacao)
+    return db_relacao
 
 
 # ============= Artigo CRUD =============
@@ -280,6 +325,20 @@ async def create_artigo(db: Session, artigo: ArtigoCreate) -> Artigo:
     db.commit()
     db.refresh(db_artigo)
     return db_artigo
+
+
+async def get_artigo(db: Session, artigo_id: int) -> Optional[Artigo]:
+    """
+    Get an article by ID.
+    
+    Args:
+        db: Database session
+        artigo_id: Article ID to retrieve
+        
+    Returns:
+        Artigo instance or None if not found
+    """
+    return db.query(Artigo).filter(Artigo.id == artigo_id).first()
 
 
 async def get_artigos_portaria(db: Session, portaria_id: int) -> List[Artigo]:
@@ -315,3 +374,32 @@ async def delete_artigo(db: Session, artigo_id: int) -> bool:
     db.delete(db_artigo)
     db.commit()
     return True
+
+
+async def update_artigo(
+    db: Session, artigo_id: int, artigo_update: ArtigoUpdate
+) -> Optional[Artigo]:
+    """
+    Update an article.
+    
+    Args:
+        db: Database session
+        artigo_id: Article ID to update
+        artigo_update: ArtigoUpdate schema with fields to update
+        
+    Returns:
+        Updated Artigo instance or None if not found
+    """
+    db_artigo = await get_artigo(db, artigo_id)
+    
+    if not db_artigo:
+        return None
+    
+    # Update only provided fields
+    update_data = artigo_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_artigo, key, value)
+    
+    db.commit()
+    db.refresh(db_artigo)
+    return db_artigo

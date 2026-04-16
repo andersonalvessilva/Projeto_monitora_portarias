@@ -1,7 +1,7 @@
 """
 API routes for Portarias endpoints.
 
-GET endpoints for listing and searching ordinances (public).
+GET endpoints for listing and searching Portarias (public).
 POST, PUT, DELETE endpoints for management (authenticated - phase 2).
 """
 
@@ -33,7 +33,7 @@ async def list_portarias_endpoint(
     limit: int = Query(100, ge=1, le=1000, description="Maximum records to return"),
 ):
     """
-    List all ordinances with optional filters.
+    List all Portarias with optional filters.
     
     Query Parameters:
     - year: Filter by publication year
@@ -42,7 +42,7 @@ async def list_portarias_endpoint(
     - limit: Pagination limit (default 100, max 1000)
     
     Returns:
-        List of ordinances
+        List of Portarias
     """
     portarias = await list_portarias(db, year=year, status=status, skip=skip, limit=limit)
     return portarias
@@ -55,14 +55,14 @@ async def search_portarias_endpoint(
     db: Session = Depends(get_db),
 ):
     """
-    Search ordinances by number, year, or title.
+    Search Portarias by number, year, or title.
     
     Query Parameters:
     - q: Search term (required)
     - limit: Maximum results (default 100)
     
     Returns:
-        List of matching ordinances
+        List of matching Portarias
     """
     portarias = await search_portarias(db, q, limit=limit)
     return portarias
@@ -74,16 +74,16 @@ async def get_portaria_endpoint(
     db: Session = Depends(get_db),
 ):
     """
-    Get ordinance by ID with full details and relationships.
+    Get Portaria by ID with full details and relationships.
     
     Path Parameters:
-    - portaria_id: Ordinance ID
+    - portaria_id: Portaria ID
     
     Returns:
-        Ordinance details
+        Portaria details
         
     Raises:
-        404: Ordinance not found
+        404: Portaria not found
     """
     portaria = await get_portaria(db, portaria_id)
     
@@ -100,10 +100,10 @@ async def get_portaria_relacoes(
     db: Session = Depends(get_db),
 ):
     """
-    Get relationships for an ordinance.
+    Get relationships for an Portaria.
     
     Path Parameters:
-    - portaria_id: Ordinance ID
+    - portaria_id: Portaria ID
     
     Query Parameters:
     - direcao: "saida" (outgoing), "entrada" (incoming), or "both"
@@ -112,7 +112,7 @@ async def get_portaria_relacoes(
         List of relationships
         
     Raises:
-        404: Ordinance not found
+        404: Portaria not found
     """
     portaria = await get_portaria(db, portaria_id)
     
@@ -129,24 +129,24 @@ async def create_portaria_endpoint(
     db: Session = Depends(get_db),
 ):
     """
-    Create a new ordinance (authenticated - phase 2).
+    Cria uma nova Portaria (autenticação - fase 2).
     
     Request Body:
-    - numero: Ordinance number (positive integer)
-    - ano: Publication year
-    - titulo: Title or short description
-    - data_publicacao: Publication date
-    - descricao_completa: Full description (optional)
-    - link_externo: URL to Diário Oficial (optional)
-    - link_local: Local document path (optional)
+    - numero: Número da Portaria (positive integer)
+    - ano: Ano da publicação
+    - titulo: Titulo ou descrição curta
+    - data_publicacao: Data da publicação
+    - descricao_completa: Full description (opcional)
+    - link_externo: URL to Diário Oficial (opcional)
+    - link_local: Local document path (opcional)
     - status: Status (default "ativa")
     
     Returns:
-        Created ordinance
+        Cria Portaria
         
     Raises:
         400: Validation error
-        409: Ordinance with same numero+ano already exists
+        409:  with same numero+ano already exists
     """
     try:
         db_portaria = await create_portaria(db, portaria)
@@ -167,19 +167,19 @@ async def update_portaria_endpoint(
     db: Session = Depends(get_db),
 ):
     """
-    Update an ordinance (authenticated - phase 2).
+    Atualizar uma Portaria (authenticated - phase 2).
     
     Path Parameters:
-    - portaria_id: Ordinance ID to update
+    - portaria_id: Portaria ID to update
     
     Request Body:
     - All fields are optional; only provided fields are updated
     
     Returns:
-        Updated ordinance
+        Updated Portaria
         
     Raises:
-        404: Ordinance not found
+        404: Portaria not found
     """
     db_portaria = await update_portaria(db, portaria_id, portaria_update)
     
@@ -195,13 +195,13 @@ async def delete_portaria_endpoint(
     db: Session = Depends(get_db),
 ):
     """
-    Delete an ordinance (authenticated - phase 2).
+    Excluir uma Portaria (authenticated - phase 2).
     
     Path Parameters:
-    - portaria_id: Ordinance ID to delete
+    - portaria_id: Portaria ID para excluir
     
     Raises:
-        404: Ordinance not found
+        404: Portaria não encontrada
     """
     success = await delete_portaria(db, portaria_id)
     

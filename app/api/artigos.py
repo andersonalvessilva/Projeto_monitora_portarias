@@ -9,7 +9,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.schemas import ArtigoCreate, ArtigoResponse
+from app.schemas.schemas import ArtigoCreate, ArtigoResponse, ArtigoUpdate
 from app.crud.crud import (
     create_artigo,
     get_artigos_portaria,
@@ -68,6 +68,17 @@ async def create_artigo_endpoint(
     """
     db_artigo = await create_artigo(db, artigo)
     return db_artigo
+
+@router.put("/{artigo_id}", response_model=ArtigoResponse)
+async def update_artigo_endpoint(
+    artigo_id: int,
+    artigo: ArtigoUpdate,
+    db: Session = Depends(get_db),
+):
+    """ Update an article/provision (authenticated - phase 2). """
+    db_artigo = await update_artigo(db, artigo_id, artigo)
+    return db_artigo
+
 
 
 @router.delete("/{artigo_id}", status_code=204)

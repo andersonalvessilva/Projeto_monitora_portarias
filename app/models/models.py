@@ -7,8 +7,8 @@ Models:
 - Artigo: Article/provision within an ordinance
 """
 
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, UniqueConstraint, Index
+from datetime import date, datetime
+from sqlalchemy import Column, Integer, String, Text, Date, ForeignKey, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -27,7 +27,7 @@ class Portaria(Base):
     ano = Column(Integer, nullable=False)
     titulo = Column(String(255), nullable=False)
     descricao_completa = Column(Text, nullable=True)
-    data_publicacao = Column(DateTime, nullable=False)
+    data_publicacao = Column(Date, nullable=False)
     link_externo = Column(String(500), nullable=True, doc="URL to Diário Oficial")
     link_local = Column(String(500), nullable=True, doc="Local path to document")
     status = Column(
@@ -36,8 +36,8 @@ class Portaria(Base):
         nullable=False,
         doc="Status: ativa, revogada, alterada, regulamentada"
     )
-    criada_em = Column(DateTime, default=datetime.utcnow, nullable=False)
-    atualizada_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    criada_em = Column(Date, default=date.today, nullable=False)
+    atualizada_em = Column(Date, default=date.today, onupdate=date.today, nullable=False)
 
     # Relationships (bidirectional)
     relacoes_saida = relationship(
@@ -89,8 +89,8 @@ class Relacao(Base):
         nullable=False,
         doc="Scope: total (entire ordinance) or parcial (partial)"
     )
-    data_relacao = Column(DateTime, default=datetime.utcnow, nullable=False)
-    criada_em = Column(DateTime, default=datetime.utcnow, nullable=False)
+    data_relacao = Column(Date, default=date.today, nullable=False)
+    criada_em = Column(Date, default=date.today, nullable=False)
 
     # Relationships
     portaria_origem = relationship(
@@ -130,7 +130,7 @@ class Artigo(Base):
     __tablename__ = "artigos"
 
     id = Column(Integer, primary_key=True, index=True)
-    numero = Column(String(50), nullable=False, doc="Article/provision number (e.g., '1', 'Art. 5, § 2')")
+    numero = Column(String(50), nullable=False, doc="Artigo/número (e.g., '1', 'Art. 5, § 2')")
     texto = Column(Text, nullable=True)
     status = Column(
         String(20),
@@ -141,7 +141,7 @@ class Artigo(Base):
     portaria_id = Column(Integer, ForeignKey("portarias.id"), nullable=False)
     relacao_alterou_id = Column(Integer, ForeignKey("relacoes.id"), nullable=True)
     observacoes = Column(Text, nullable=True, doc="Observations about exclusions or alterations")
-    criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
+    criado_em = Column(Date, default=date.today, nullable=False)
 
     # Relationships
     portaria = relationship("Portaria", back_populates="artigos")

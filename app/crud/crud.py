@@ -4,8 +4,9 @@ CRUD operations for Monitora Portarias application.
 Functions for Create, Read, Update, Delete operations on models.
 """
 
+from fastapi import HTTPException
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, and_
 from app.models.models import Portaria, Relacao, Artigo
 from app.schemas.schemas import (
@@ -52,7 +53,10 @@ async def get_portaria(db: Session, portaria_id: int) -> Optional[Portaria]:
     Returns:
         Portaria instance or None if not found
     """
-    return db.query(Portaria).filter(Portaria.id == portaria_id).first()
+    return db.query(Portaria).options(
+        joinedload(Portaria.relacoes_saida).joinedload(Relacao.portaria_destino),
+        joinedload(Portaria.relacoes_entrada).joinedload(Relacao.portaria_origem)
+    ).filter(Portaria.id == portaria_id).first()
 
 
 async def list_portarias(
@@ -75,7 +79,10 @@ async def list_portarias(
     Returns:
         List of Portaria instances
     """
-    query = db.query(Portaria)
+    query = db.query(Portaria).options(
+        joinedload(Portaria.relacoes_saida).joinedload(Relacao.portaria_destino),
+        joinedload(Portaria.relacoes_entrada).joinedload(Relacao.portaria_origem),
+    )
     
     if year:
         query = query.filter(Portaria.ano == year)
@@ -183,11 +190,20 @@ async def create_relacao(db: Session, relacao: RelacaoCreate) -> Relacao:
     Returns:
         Created Relacao instance
     """
+
     db_relacao = Relacao(**relacao.model_dump())
-    db.add(db_relacao)
-    db.commit()
-    db.refresh(db_relacao)
-    return db_relacao
+
+    portaria_origem = await get_portaria(db, relacao.portaria_origem_id)
+    portaria_destino = await get_portaria(db, relacao.portaria_destino_id)
+    
+    if portaria_origem and portaria_destino:
+        update_portaria(db, portaria_destino.id, PortariaUpdate(status="alterada"))
+        db.add(db_relacao)
+        db.commit()
+        db.refresh(db_relacao)
+        return db_relacao
+    else:
+        raise HTTPException(status_code=404, detail=f"Portaria {relacao.portaria_origem_id} ou {relacao.portaria_destino_id} não encontrada")
 
 
 async def get_relacao(db: Session, relacao_id: int) -> Optional[Relacao]:
@@ -201,7 +217,7 @@ async def get_relacao(db: Session, relacao_id: int) -> Optional[Relacao]:
     Returns:
         Relacao instance or None if not found
     """
-    return db.query(Relacao).filter(Relacao.id == relacao_id).first()
+    return db.query(Relacao).options(joinedload(Relacao.portaria_origem), joinedload(Relacao.portaria_destino)).filter(Relacao.id == relacao_id).first()
 
 
 async def get_relacoes_portaria(
@@ -218,17 +234,27 @@ async def get_relacoes_portaria(
     Returns:
         List of Relacao instances
     """
+    query = db.query(Relacao).options(joinedload(Relacao.portaria_origem), joinedload(Relacao.portaria_destino))
     if direcao == "saida":
-        return db.query(Relacao).filter(Relacao.portaria_origem_id == portaria_id).all()
+        relacoes = query.filter(Relacao.portaria_origem_id == portaria_id).all()
+        for relacao in relacoes:
+            relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+        return relacoes
     elif direcao == "entrada":
-        return db.query(Relacao).filter(Relacao.portaria_destino_id == portaria_id).all()
+        relacoes = query.filter(Relacao.portaria_destino_id == portaria_id).all()
+        for relacao in relacoes:
+            relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+        return relacoes
     else:  # both
-        return db.query(Relacao).filter(
+        relacoes = query.filter(
             or_(
                 Relacao.portaria_origem_id == portaria_id,
                 Relacao.portaria_destino_id == portaria_id,
             )
         ).all()
+        for relacao in relacoes:
+            relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+        return relacoes
 
 
 async def list_relacoes(
@@ -249,7 +275,7 @@ async def list_relacoes(
     Retorna:
         Lista das instâncias Relacao
     """
-    query = db.query(Relacao)
+    query = db.query(Relacao).options(joinedload(Relacao.portaria_origem), joinedload(Relacao.portaria_destino))
     
     if tipo_relacao:
         query = query.filter(Relacao.tipo_relacao == tipo_relacao)

@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import Portaria
-from app.schemas.schemas import PortariaCreate, PortariaUpdate, PortariaResponse, RelacaoResponse
+from app.schemas.schemas import PortariaCreate, PortariaUpdate, PortariaResponse, PortariaSummary, RelacaoResponse, RelacaoSummary
 from app.crud.crud import (
     create_portaria,
     get_portaria,
@@ -42,9 +42,16 @@ async def list_portarias_endpoint(
     - limit: Pagination limit (default 100, max 1000)
     
     Returns:
-        List of Portarias
+        List of Portarias (summary fields only)
     """
     portarias = await list_portarias(db, year=year, status=status, skip=skip, limit=limit)
+
+    for portaria in portarias:
+        for relacao in portaria.relacoes_entrada:
+            relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+        for relacao in portaria.relacoes_saida:
+            relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+
     return portarias
 
 
@@ -89,6 +96,12 @@ async def get_portaria_endpoint(
     
     if not portaria:
         raise HTTPException(status_code=404, detail=f"Portaria {portaria_id} not found")
+    
+    # Populate origem_titulo on relacao instances
+    for relacao in portaria.relacoes_saida:
+        relacao.origem_titulo = portaria.titulo
+    for relacao in portaria.relacoes_entrada:
+        relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
     
     return portaria
 

@@ -40,7 +40,12 @@ async def list_relacoes_endpoint(
         Lista de relacionamentos
     """
     relacoes = await list_relacoes(db, tipo_relacao=tipo_relacao, skip=skip, limit=limit)
-    return relacoes
+    responses = []
+    for relacao in relacoes:
+        response = RelacaoResponse.from_orm(relacao)
+        response.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+        responses.append(response)
+    return responses
 
 
 @router.post("", response_model=RelacaoResponse, status_code=201)
@@ -65,7 +70,9 @@ async def create_relacao_endpoint(
         400: Validation error
     """
     db_relacao = await create_relacao(db, relacao)
-    return db_relacao
+    response = RelacaoResponse.from_orm(db_relacao)
+    response.origem_titulo = db_relacao.portaria_origem.titulo if db_relacao.portaria_origem else None
+    return response
 
 
 @router.put("/{relacao_id}", response_model=RelacaoResponse)
@@ -91,7 +98,9 @@ async def update_relacao_endpoint(
         400: Validation error
     """
     db_relacao = await update_relacao(db, relacao_id, relacao)
-    return db_relacao
+    response = RelacaoResponse.from_orm(db_relacao)
+    response.origem_titulo = db_relacao.portaria_origem.titulo if db_relacao.portaria_origem else None
+    return response
 
 @router.delete("/{relacao_id}", status_code=204)
 async def delete_relacao_endpoint(

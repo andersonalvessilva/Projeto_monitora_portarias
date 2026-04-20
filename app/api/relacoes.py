@@ -1,8 +1,9 @@
 """
-API routes for Relacoes endpoints.
+API routes para endpoints de Relações.
 
-GET endpoints for listing relationships (public).
-POST, DELETE endpoints for management (authenticated - phase 2).
+GET endpoints para listagem de relacionamentos (publicas).
+POST, DELETE endpoints para gerenciamento (autenticado - fase 2).
+
 """
 
 from typing import List, Optional
@@ -12,6 +13,7 @@ from app.database import get_db
 from app.schemas.schemas import RelacaoCreate, RelacaoResponse, RelacaoUpdate
 from app.crud.crud import (
     create_relacao,
+    get_relacao,
     list_relacoes,
     update_relacao,
     get_relacoes_portaria,
@@ -44,8 +46,34 @@ async def list_relacoes_endpoint(
     for relacao in relacoes:
         response = RelacaoResponse.from_orm(relacao)
         response.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+        response.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
         responses.append(response)
     return responses
+
+@router.get("/{relacao_id}", response_model=RelacaoResponse)
+async def get_relacao_endpoint(
+    relacao_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Get a specific relationship by ID.
+    
+    Path Parameters:
+    - relacao_id: Relationship ID
+    
+    Returns:
+        Relacao instance or None if not found
+    """
+    relacao = await get_relacao(db, relacao_id)
+    if not relacao:
+        raise HTTPException(status_code=404, detail=f"Relacao {relacao_id} não encontrada")
+    
+    response = RelacaoResponse.from_orm(relacao)
+    response.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+    response.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
+    return response
+
+
 
 
 @router.post("", response_model=RelacaoResponse, status_code=201)
@@ -54,25 +82,30 @@ async def create_relacao_endpoint(
     db: Session = Depends(get_db),
 ):
     """
-    Create a relationship between ordinances (authenticated - phase 2).
+    Cria relacionamento entre duas Portarias (authenticated - phase 2).
     
     Request Body:
-    - portaria_origem_id: Source ordinance ID
-    - portaria_destino_id: Destination ordinance ID
+    - portaria_origem_id: ID da Portaria de origem
+    - portaria_destino_id: ID da Portaria de destino
     - tipo_relacao: Type (complementa, altera, revoga, regulamenta)
-    - descricao: Description (optional)
-    - escopo: Scope (total or parcial, default "total")
+    - descricao: Descrição (optional)
+    - escopo: Scope (total ou parcial, padrão = "total")
     
     Returns:
-        Created relationship
+        Relacionamento criado
         
     Raises:
-        400: Validation error
+        400: Erro de validação
     """
-    db_relacao = await create_relacao(db, relacao)
-    response = RelacaoResponse.from_orm(db_relacao)
-    response.origem_titulo = db_relacao.portaria_origem.titulo if db_relacao.portaria_origem else None
-    return response
+    try:
+        db_relacao = await create_relacao(db, relacao)
+        response = RelacaoResponse.from_orm(db_relacao)
+        response.origem_titulo = db_relacao.portaria_origem.titulo if db_relacao.portaria_origem else None
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 
 
 @router.put("/{relacao_id}", response_model=RelacaoResponse)

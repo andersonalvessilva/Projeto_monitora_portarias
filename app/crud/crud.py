@@ -1,7 +1,7 @@
 """
-CRUD operations for Monitora Portarias application.
+Operações CRUD para Monitora Portarias.
 
-Functions for Create, Read, Update, Delete operations on models.
+Funções para operações de Criar, Ler, Atualizar, Excluir em modelos.
 """
 
 from fastapi import HTTPException
@@ -19,21 +19,21 @@ from app.schemas.schemas import (
 )
 
 
-# ============= Portaria CRUD =============
+# ============= CRUD de Portarias =============
 
 async def create_portaria(db: Session, portaria: PortariaCreate) -> Portaria:
     """
-    Create a new ordinance.
+    Cria uma nova portaria.
     
-    Args:
-        db: Database session
-        portaria: PortariaCreate schema
+    Argumentos:
+        db: Sessão do banco de dados
+        portaria: Schema PortariaCreate
         
-    Returns:
-        Created Portaria instance
+    Retorna:
+        Instância de Portaria criada
         
-    Raises:
-        sqlalchemy.exc.IntegrityError: If numero+ano already exists
+    Levanta:
+        sqlalchemy.exc.IntegrityError: Se numero+ano já existe
     """
     db_portaria = Portaria(**portaria.model_dump())
     db.add(db_portaria)
@@ -44,14 +44,14 @@ async def create_portaria(db: Session, portaria: PortariaCreate) -> Portaria:
 
 async def get_portaria(db: Session, portaria_id: int) -> Optional[Portaria]:
     """
-    Get ordinance by ID.
+    Obtém uma portaria pelo ID.
     
-    Args:
-        db: Database session
-        portaria_id: Ordinance ID
+    Argumentos:
+        db: Sessão do banco de dados
+        portaria_id: ID da portaria
         
-    Returns:
-        Portaria instance or None if not found
+    Retorna:
+        Instância de Portaria ou None se não encontrada
     """
     return db.query(Portaria).options(
         joinedload(Portaria.relacoes_saida).joinedload(Relacao.portaria_destino),
@@ -67,17 +67,17 @@ async def list_portarias(
     limit: int = 100,
 ) -> List[Portaria]:
     """
-    List ordinances with optional filters.
+    Lista portarias com filtros opcionais.
     
-    Args:
-        db: Database session
-        year: Filter by publication year
-        status: Filter by status (ativa, revogada, alterada, regulamentada)
-        skip: Number of records to skip (pagination)
-        limit: Maximum number of records to return
+    Argumentos:
+        db: Sessão do banco de dados
+        year: Filtra pelo ano de publicação
+        status: Filtra pelo status (ativa, revogada, alterada, regulamentada)
+        skip: Número de registros a pular (paginação)
+        limit: Número máximo de registros a retornar
         
-    Returns:
-        List of Portaria instances
+    Retorna:
+        Lista de instâncias de Portaria
     """
     query = db.query(Portaria).options(
         joinedload(Portaria.relacoes_saida).joinedload(Relacao.portaria_destino),
@@ -95,58 +95,59 @@ async def list_portarias(
 
 async def search_portarias(db: Session, query_text: str, limit: int = 100) -> List[Portaria]:
     """
-    Search ordinances by number, year, or title.
+    Busca portarias por número, ano ou título.
     
-    Args:
-        db: Database session
-        query_text: Search query
-        limit: Maximum number of results
+    Argumentos:
+        db: Sessão do banco de dados
+        query_text: Consulta de busca
+        limit: Número máximo de resultados
         
-    Returns:
-        List of matching Portaria instances
+    Retorna:
+        Lista de instâncias de Portaria correspondentes
     """
-    # Try parsing as number/year
+    # Tenta analisar como número/ano
     try:
         numero = int(query_text)
-        return db.query(Portaria).filter(Portaria.numero == numero).limit(limit).all()
-    except ValueError:
-        pass
-    
-    # Search in titulo and descricao_completa
-    search_term = f"%{query_text}%"
-    return (
-        db.query(Portaria)
-        .filter(
+        return db.query(Portaria).filter(
             or_(
+                Portaria.numero == numero, 
+                Portaria.ano == numero)).limit(limit).all()
+    except ValueError as e:
+        print(f"Query '{query_text}' não é um número/ano: {e}")
+        pass
+    # Busca em titulo e descricao_completa
+    search_term = f"%{query_text}%"
+    query =  db.query(Portaria).filter( or_(
                 Portaria.titulo.ilike(search_term),
                 Portaria.descricao_completa.ilike(search_term),
             )
-        )
-        .limit(limit)
-        .all()
-    )
+        ).limit(limit).all()
+    if len(query) == 0:
+        raise HTTPException(status_code=404, detail=f"Nenhuma Portarias encontrada com o seguinte parâmetro de consulta: '{query_text}'")
+    else:
+        return query
 
 
 async def update_portaria(
     db: Session, portaria_id: int, portaria_update: PortariaUpdate
 ) -> Optional[Portaria]:
     """
-    Update an ordinance.
+    Atualiza uma portaria.
     
-    Args:
-        db: Database session
-        portaria_id: Ordinance ID to update
-        portaria_update: PortariaUpdate schema with fields to update
+    Argumentos:
+        db: Sessão do banco de dados
+        portaria_id: ID da portaria para atualizar
+        portaria_update: Schema PortariaUpdate com campos para atualizar
         
-    Returns:
-        Updated Portaria instance or None if not found
+    Retorna:
+        Instância de Portaria atualizada ou None se não encontrada
     """
     db_portaria = await get_portaria(db, portaria_id)
     
     if not db_portaria:
         return None
     
-    # Update only provided fields
+    # Atualiza apenas os campos fornecidos
     update_data = portaria_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_portaria, key, value)
@@ -158,14 +159,14 @@ async def update_portaria(
 
 async def delete_portaria(db: Session, portaria_id: int) -> bool:
     """
-    Delete an ordinance (cascades to relacoes and artigos).
+    Exclui uma portaria (em cascata para relações e artigos).
     
-    Args:
-        db: Database session
-        portaria_id: Ordinance ID to delete
+    Argumentos:
+        db: Sessão do banco de dados
+        portaria_id: ID da portaria a ser excluída
         
-    Returns:
-        True if deleted, False if not found
+    Retorna:
+        True se excluída, False se não encontrada
     """
     db_portaria = await get_portaria(db, portaria_id)
     
@@ -177,18 +178,21 @@ async def delete_portaria(db: Session, portaria_id: int) -> bool:
     return True
 
 
-# ============= Relacao CRUD =============
+# ============= CRUD de Relações =============
 
 async def create_relacao(db: Session, relacao: RelacaoCreate) -> Relacao:
     """
-    Create a relationship between ordinances.
+    Cria um relacionamento entre Portarias.
     
-    Args:
-        db: Database session
-        relacao: RelacaoCreate schema
-        
-    Returns:
-        Created Relacao instance
+    Argumentos:
+        db: Sessão do banco de dados
+        relacao: Schema RelacaoCreate
+
+    Retorna:
+        Instância de Relação criada
+
+    Levanta:
+        404: Portaria não encontrada (origem ou destino)
     """
 
     db_relacao = Relacao(**relacao.model_dump())
@@ -197,55 +201,58 @@ async def create_relacao(db: Session, relacao: RelacaoCreate) -> Relacao:
     portaria_destino = await get_portaria(db, relacao.portaria_destino_id)
     
     if portaria_origem and portaria_destino:
-        update_portaria(db, portaria_destino.id, PortariaUpdate(status="alterada"))
+        await update_portaria(db, portaria_destino.id, PortariaUpdate(status="alterada"))
         db.add(db_relacao)
         db.commit()
         db.refresh(db_relacao)
         return db_relacao
     else:
-        raise HTTPException(status_code=404, detail=f"Portaria {relacao.portaria_origem_id} ou {relacao.portaria_destino_id} não encontrada")
+        raise HTTPException(status_code=404, 
+                            detail=f"Portaria(s) não encontrada(s)")
 
 
 async def get_relacao(db: Session, relacao_id: int) -> Optional[Relacao]:
     """
-    Get a relationship by ID.
+    Obtém um relacionamento pelo ID.
     
-    Args:
-        db: Database session
-        relacao_id: Relationship ID to retrieve
+    Argumentos:
+        db: Sessão do banco de dados
+        relacao_id: ID do relacionamento a ser recuperado
         
-    Returns:
-        Relacao instance or None if not found
+    Retorna:
+        Instância de Relacao ou None se não encontrada
     """
     return db.query(Relacao).options(joinedload(Relacao.portaria_origem), joinedload(Relacao.portaria_destino)).filter(Relacao.id == relacao_id).first()
 
 
 async def get_relacoes_portaria(
-    db: Session, portaria_id: int, direcao: str = "both"
+    db: Session, portaria_id: int, direcao: str = "ambos"
 ) -> List[Relacao]:
     """
-    Get relationships for an ordinance.
+    Obtém relacionamentos para uma portaria.
     
-    Args:
-        db: Database session
-        portaria_id: Ordinance ID
-        direcao: "saida" (outgoing), "entrada" (incoming), or "both" (default)
+    Argumentos:
+        db: Sessão do banco de dados
+        portaria_id: ID da portaria
+        direcao: "saída" (saída), "entrada" (entrada), ou "ambos" (padrão)
         
-    Returns:
-        List of Relacao instances
+    Retorna:
+        Lista de instâncias de Relacao
     """
     query = db.query(Relacao).options(joinedload(Relacao.portaria_origem), joinedload(Relacao.portaria_destino))
     if direcao == "saida":
         relacoes = query.filter(Relacao.portaria_origem_id == portaria_id).all()
         for relacao in relacoes:
             relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+            relacao.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
         return relacoes
     elif direcao == "entrada":
         relacoes = query.filter(Relacao.portaria_destino_id == portaria_id).all()
         for relacao in relacoes:
             relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+            relacao.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
         return relacoes
-    else:  # both
+    else:  # ambos
         relacoes = query.filter(
             or_(
                 Relacao.portaria_origem_id == portaria_id,
@@ -254,6 +261,8 @@ async def get_relacoes_portaria(
         ).all()
         for relacao in relacoes:
             relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+            relacao.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
+
         return relacoes
 
 
@@ -264,13 +273,13 @@ async def list_relacoes(
     limit: int = 100,
 ) -> List[Relacao]:
     """
-    List relationships with optional filters.
+    Lista relacionamentos com filtros opcionais.
     
-    Args:
-        db: Database session
-        tipo_relacao: Filter by relationship type
-        skip: Number of records to skip
-        limit: Maximum number of records
+    Argumentos:
+        db: Sessão do banco de dados
+        tipo_relacao: Filtra pelo tipo de relacionamento
+        skip: Número de registros a pular
+        limit: Número máximo de registros
         
     Retorna:
         Lista das instâncias Relacao
@@ -287,12 +296,12 @@ async def delete_relacao(db: Session, relacao_id: int) -> bool:
     """
     Deleta o relacionamento.
     
-    Args:
-        db: Database session
-        relacao_id: Relationship ID to delete
+    Argumentos:
+        db: Sessão do banco de dados
+        relacao_id: ID do relacionamento a ser excluído
         
-    Returns:
-        True if deleted, False if not found
+    Retorna:
+        True se excluído, False se não encontrado
     """
     db_relacao = db.query(Relacao).filter(Relacao.id == relacao_id).first()
     
@@ -308,22 +317,22 @@ async def update_relacao(
     db: Session, relacao_id: int, relacao_update: RelacaoUpdate
 ) -> Optional[Relacao]:
     """
-    Update a relationship.
+    Atualiza um relacionamento.
     
-    Args:
-        db: Database session
-        relacao_id: Relationship ID to update
-        relacao_update: RelacaoUpdate schema with fields to update
+    Argumentos:
+        db: Sessão do banco de dados
+        relacao_id: ID do relacionamento a ser atualizado
+        relacao_update: Schema RelacaoUpdate com campos para atualizar
         
-    Returns:
-        Updated Relacao instance or None if not found
+    Retorna:
+        Instância de Relacao atualizada ou None se não encontrada
     """
     db_relacao = await get_relacao(db, relacao_id)
     
     if not db_relacao:
         return None
     
-    # Update only provided fields
+    # Atualiza apenas os campos fornecidos
     update_data = relacao_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_relacao, key, value)
@@ -333,18 +342,18 @@ async def update_relacao(
     return db_relacao
 
 
-# ============= Artigo CRUD =============
+# ============= CRUD de Artigos =============
 
 async def create_artigo(db: Session, artigo: ArtigoCreate) -> Artigo:
     """
-    Create an article/provision.
+    Cria um artigo/dispositivo.
     
-    Args:
-        db: Database session
-        artigo: ArtigoCreate schema
+    Argumentos:
+        db: Sessão do banco de dados
+        artigo: Schema ArtigoCreate
         
-    Returns:
-        Created Artigo instance
+    Retorna:
+        Instância de Artigo criada
     """
     db_artigo = Artigo(**artigo.model_dump())
     db.add(db_artigo)
@@ -355,14 +364,14 @@ async def create_artigo(db: Session, artigo: ArtigoCreate) -> Artigo:
 
 async def get_artigo(db: Session, artigo_id: int) -> Optional[Artigo]:
     """
-    Get an article by ID.
+    Obtém um artigo pelo ID.
     
-    Args:
-        db: Database session
-        artigo_id: Article ID to retrieve
+    Argumentos:
+        db: Sessão do banco de dados
+        artigo_id: ID do artigo a ser recuperado
         
-    Returns:
-        Artigo instance or None if not found
+    Retorna:
+        Instância de Artigo ou None se não encontrada
     """
     return db.query(Artigo).filter(Artigo.id == artigo_id).first()
 
@@ -383,13 +392,13 @@ async def get_artigos_portaria(db: Session, portaria_id: int) -> List[Artigo]:
 
 async def delete_artigo(db: Session, artigo_id: int) -> bool:
     """
-    Delete an article.
+    Apaga um artigo.
     
-    Args:
+    Argumentos:
         db: Database session
         artigo_id: Article ID to delete
         
-    Returns:
+    Retorna:
         True if deleted, False if not found
     """
     db_artigo = db.query(Artigo).filter(Artigo.id == artigo_id).first()

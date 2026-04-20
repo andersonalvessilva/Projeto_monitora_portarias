@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import Portaria
-from app.schemas.schemas import PortariaCreate, PortariaUpdate, PortariaResponse, PortariaSummary, RelacaoResponse, RelacaoSummary
+from app.schemas.schemas import PortariaBase, PortariaCreate, PortariaUpdate, PortariaResponse, PortariaSummary, RelacaoResponse, RelacaoSummary
 from app.crud.crud import (
     create_portaria,
     get_portaria,
@@ -27,22 +27,22 @@ router = APIRouter(prefix="/api/v1/portarias", tags=["portarias"])
 @router.get("", response_model=List[PortariaResponse])
 async def list_portarias_endpoint(
     db: Session = Depends(get_db),
-    year: Optional[int] = Query(None, description="Filter by publication year"),
-    status: Optional[str] = Query(None, description="Filter by status"),
-    skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum records to return"),
+    year: Optional[int] = Query(None, description="Filtro por ano de publicação"),
+    status: Optional[str] = Query(None, description="Filtro por status"),
+    skip: int = Query(0, ge=0, description="Número de registro a desconsiderar para paginação"),
+    limit: int = Query(100, ge=1, le=1000, description="Número máximo de resultados"),
 ):
     """
-    List all Portarias with optional filters.
+    Lista todas as Portarias com filtros opcionais.
     
     Query Parameters:
-    - year: Filter by publication year
-    - status: Filter by status (ativa, revogada, alterada, regulamentada)
-    - skip: Pagination offset (default 0)
-    - limit: Pagination limit (default 100, max 1000)
+    - year: Filtra por ano de publicação
+    - status: Filtra por status (ativa, revogada, alterada, regulamentada)
+    - skip: Offset de paginação (default 0)
+    - limit: Limite de paginação (default 100, max 1000)
     
     Returns:
-        List of Portarias (summary fields only)
+        Lista de Portarias (summary fields only)
     """
     portarias = await list_portarias(db, year=year, status=status, skip=skip, limit=limit)
 
@@ -57,20 +57,21 @@ async def list_portarias_endpoint(
 
 @router.get("/search", response_model=List[PortariaResponse])
 async def search_portarias_endpoint(
-    q: str = Query(..., min_length=1, description="Search query (number, year, or title)"),
+    q: str = Query(..., min_length=1, description="Query (número, ano ou título)"),
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
 ):
     """
-    Search Portarias by number, year, or title.
+    Pesquisa Portarias por número, ano ou título.
     
     Query Parameters:
     - q: Search term (required)
-    - limit: Maximum results (default 100)
+    - limit: Maximo de resultados a retornar (default 100)
     
     Returns:
         List of matching Portarias
     """
+    
     portarias = await search_portarias(db, q, limit=limit)
     return portarias
 
@@ -95,7 +96,7 @@ async def get_portaria_endpoint(
     portaria = await get_portaria(db, portaria_id)
     
     if not portaria:
-        raise HTTPException(status_code=404, detail=f"Portaria {portaria_id} not found")
+        raise HTTPException(status_code=404, detail=f"Portaria {portaria_id} não encontrada")
     
     # Populate origem_titulo on relacao instances
     for relacao in portaria.relacoes_saida:
@@ -109,7 +110,7 @@ async def get_portaria_endpoint(
 @router.get("/{portaria_id}/relacoes", response_model=List[RelacaoResponse])
 async def get_portaria_relacoes(
     portaria_id: int = Path(..., gt=0),
-    direcao: str = Query("both", regex="^(saida|entrada|both)$"),
+    direcao: str = Query("both", pattern="^(saida|entrada|both)$"),
     db: Session = Depends(get_db),
 ):
     """
@@ -136,7 +137,7 @@ async def get_portaria_relacoes(
     return relacoes
 
 
-@router.post("", response_model=PortariaResponse, status_code=201)
+@router.post("", response_model=PortariaBase, status_code=201)
 async def create_portaria_endpoint(
     portaria: PortariaCreate,
     db: Session = Depends(get_db),
@@ -155,7 +156,7 @@ async def create_portaria_endpoint(
     - status: Status (default "ativa")
     
     Returns:
-        Cria Portaria
+        Portaria criada
         
     Raises:
         400: Validation error
@@ -165,10 +166,10 @@ async def create_portaria_endpoint(
         db_portaria = await create_portaria(db, portaria)
         return db_portaria
     except Exception as e:
-        if "uq_portaria_numero_ano" in str(e):
+        if "UNIQUE constraint failed" in str(e):
             raise HTTPException(
                 status_code=409,
-                detail=f"Portaria {portaria.numero}/{portaria.ano} already exists"
+                detail=f"Portaria {portaria.titulo} já existe na base de dados."
             )
         raise HTTPException(status_code=400, detail=str(e))
 

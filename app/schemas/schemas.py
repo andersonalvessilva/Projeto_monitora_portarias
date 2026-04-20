@@ -24,9 +24,14 @@ class PortariaBase(BaseModel):
     status: str = Field(default="ativa", description="Status: ativa, revogada, alterada, regulamentada")
 
 
-class PortariaCreate(PortariaBase):
+class PortariaCreate(BaseModel):
     """Schema for creating a new Portaria."""
-    pass
+    numero: int = Field(..., gt=0, description="Número ordinal(necessita ser positivo)")
+    ano: int = Field(..., ge=1900, le=2100, description="Ano da publicação")
+    titulo: str = Field(..., min_length=3, max_length=255, description="Subtítulo")
+    descricao_completa: Optional[str] = Field(None, description="Descrição completa")
+    data_publicacao: date = Field(..., description="Ano da publicação")
+    link_externo: Optional[str] = Field(None, max_length=500, description="URL to Diário Oficial")
 
 
 class PortariaUpdate(BaseModel):
@@ -54,7 +59,7 @@ class PortariaSummary(BaseModel):
 
 class PortariaResponse(PortariaBase):
     """Schema for Portaria response (with ID and relationships)."""
-    # id: int
+    #id: int
     #criada_em: date
     #atualizada_em: date
     relacoes_saida: Optional[List['RelacaoResponse']] = []
@@ -69,11 +74,11 @@ class PortariaResponse(PortariaBase):
 
 class RelacaoBase(BaseModel):
     """Base schema for Relacao with common fields."""
-    portaria_origem_id: int = Field(..., description="Source ordinance ID")
-    portaria_destino_id: int = Field(..., description="Destination ordinance ID")
+    portaria_origem_id: int = Field(..., description="Portaria de origem ID")
+    portaria_destino_id: int = Field(..., description="Portaria de destino ID")
     tipo_relacao: str = Field(..., description="Tipo: complementa, altera, revoga, regulamenta")
     descricao: Optional[str] = Field(None, description="Descrição do relacionamento")
-    escopo: str = Field(default="total", description="Escopo: total or parcial")
+    escopo: str = Field(default="total", description="Escopo: total ou parcial")
 
 class RelacaoUpdate(BaseModel):
     """Schema for updating a Relacao."""
@@ -91,8 +96,8 @@ class RelacaoCreate(RelacaoBase):
 
 class RelacaoResponse(RelacaoBase):
     """Schema for Relacao response (with ID and timestamps)."""
-    id: int
     origem_titulo: Optional[str] = Field(None, description="Título da portaria de origem")
+    destino_titulo: Optional[str] = Field(None, description="Título da portaria de destino")
     #data_relacao: date
     #criada_em: date
 
@@ -105,6 +110,7 @@ class RelacaoSummary(BaseModel):
     id: int
     tipo_relacao: str
     origem_titulo: Optional[str] = Field(None, description="Título da portaria de origem")
+    destino_titulo: Optional[str] = Field(None, description="Título da portaria de destino")
 
     class Config:
         from_attributes = True

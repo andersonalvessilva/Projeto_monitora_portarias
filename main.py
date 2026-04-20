@@ -1,5 +1,5 @@
 """
-Monitora Portarias - Main application entry point.
+Monitora Portarias - Entrypoint da aplicação principal.
 
 FastAPI application for monitoring and visualizing relationships between
 regulatory ordinances (portarias) from the Ministry of Health.

@@ -59,9 +59,6 @@ class PortariaSummary(BaseModel):
 
 class PortariaResponse(PortariaBase):
     """Schema for Portaria response (with ID and relationships)."""
-    #id: int
-    #criada_em: date
-    #atualizada_em: date
     relacoes_saida: Optional[List['RelacaoResponse']] = []
     relacoes_entrada: Optional[List['RelacaoResponse']] = []
     #artigos: Optional[List['ArtigoResponse']] = []
@@ -98,8 +95,6 @@ class RelacaoResponse(RelacaoBase):
     """Schema for Relacao response (with ID and timestamps)."""
     origem_titulo: Optional[str] = Field(None, description="Título da portaria de origem")
     destino_titulo: Optional[str] = Field(None, description="Título da portaria de destino")
-    #data_relacao: date
-    #criada_em: date
 
     class Config:
         from_attributes = True

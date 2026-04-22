@@ -26,7 +26,7 @@ app = FastAPI(
 # Configure CORS (phase 2: move to settings)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Configure via environment variable
+    allow_origins=["*", "http://localhost:5173"],  # TODO: Configure via environment variable
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

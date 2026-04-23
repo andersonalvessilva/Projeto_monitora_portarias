@@ -96,6 +96,40 @@ O sistema deve ajudar analistas e gestores a entender o impacto de mudanças nor
 - Linha do tempo cronológica de publicações e alterações.
 - Relatórios ou exportação de gráficos para PNG/PDF.
 
+### Frontend / Stack Tecnológico
+
+**Framework e UI:**
+- **Vite**: desenvolvimento rápido com HMR e build otimizado.
+- **React 19**: UI declarativa e componentes reutilizáveis.
+- **TypeScript**: tipagem estática no frontend e maior segurança em API calls.
+- **ESLint**: padrão de código e qualidade.
+
+**Frontend implementado em:**
+- `frontend/`
+
+**Responsabilidades do frontend:**
+- Consumir a API pública REST do backend (`/api/v1`).
+- Exibir lista de portarias, filtros e busca.
+- Mostrar painel detalhado da portaria selecionada.
+- Preparar a visualização de relações com cores e contadores.
+- Suporte a busca por número, ano e título.
+
+**Configuração de ambiente frontend:**
+- `VITE_API_BASE_URL` (opcional) aponta para a URL da API do backend.
+- Default: `http://localhost:8000`.
+
+**MVP do frontend:**
+- Dashboard de portarias.
+- Lista de portarias com seleção.
+- Painel de detalhes com links e status.
+- Pesquisa e filtros por ano/status.
+- Visão inicial de relações de entrada/saída.
+
+**Próxima fase front-end:**
+- Gráfico de nós/arestas para as relações.
+- Autenticação para criação/edição de portarias.
+- Exportação de relatórios e impressão.
+
 ### Backend / Stack Tecnológico
 
 **Framework e ORM:**
@@ -120,6 +154,12 @@ app/
   crud/            # CRUD operations (create_portaria, get_portaria, list_portarias, etc)
   api/             # Rotas FastAPI (v1/portarias, v1/relacoes, v1/artigos)
   database.py      # Conexão e session management com banco de dados
+frontend/
+  frontend/        # Vite + React frontend
+    package.json
+    tsconfig.json
+    src/
+    public/
 main.py            # Aplicação FastAPI principal
 requirements.txt   # Dependências (FastAPI, SQLAlchemy, psycopg2-binary, alembic)
 .env.example       # Exemplo de variáveis de ambiente para dev e prod

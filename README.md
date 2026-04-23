@@ -40,6 +40,22 @@ cp .env.example .env
 # Edite .env conforme necessário (para dev, usar SQLite)
 ```
 
+## Frontend
+O frontend está no diretório `frontend/frontend` e usa Vite + React + TypeScript.
+
+### Executando o frontend
+```bash
+cd frontend/frontend
+npm install
+npm run dev
+```
+
+Se a API estiver rodando em outra porta, configure `VITE_API_BASE_URL` antes de iniciar:
+```bash
+export VITE_API_BASE_URL=http://localhost:8000
+npm run dev
+```
+
 ## Rodando a Aplicação
 
 ### Development (SQLite)

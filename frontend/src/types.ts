@@ -10,6 +10,7 @@ export interface Relacao {
   escopo?: "total" | "parcial"
   data_relacao?: string | null
   origem_titulo?: string | null
+  destino_titulo?: string | null
 }
 
 export interface Portaria {

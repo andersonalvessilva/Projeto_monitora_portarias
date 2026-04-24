@@ -82,7 +82,7 @@ async def list_portarias(
     query = db.query(Portaria).options(
         joinedload(Portaria.relacoes_saida).joinedload(Relacao.portaria_destino),
         joinedload(Portaria.relacoes_entrada).joinedload(Relacao.portaria_origem),
-    )
+    ).order_by(Portaria.ano.desc(), Portaria.numero.desc())
     
     if year:
         query = query.filter(Portaria.ano == year)

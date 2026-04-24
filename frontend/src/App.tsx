@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { listPortarias, searchPortarias } from "./api"
 import type { Portaria, PortariaStatus } from "./types"
+import { PortariaGraph } from "./components/PortariaGraph"
 import "./App.css"
 
 const statusOptions = [
@@ -110,7 +111,7 @@ function App() {
       <header className="app-header">
         <div>
           <p className="eyebrow">Monitora Portarias</p>
-          <h1>Dashboard inicial</h1>
+          <h1 className="title">Dashboard inicial</h1>
           <p className="subtitle">
             Lista de portarias, filtros e painel de detalhes.
           </p>
@@ -204,12 +205,12 @@ function App() {
                   onClick={() => setSelectedPortaria(portaria)}
                 >
                   <div className="card-title">
-                    <span>{portaria.numero}/{portaria.ano}</span>
+                    <span>{portaria.ano}</span>
                     <span className={`status-pill status-${portaria.status}`}>
                       {statusLabel[portaria.status]}
                     </span>
                   </div>
-                  <p className="card-subtitle">{portaria.titulo}</p>
+                  <p className="card-subtitle">{portaria.titulo.toUpperCase()}</p>
                 </button>
               ))}
             </div>
@@ -271,9 +272,15 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <div className="graph-placeholder">
-                  <span>Visualização de grafo em desenvolvimento</span>
-                </div>
+                <PortariaGraph
+                  selectedPortaria={selectedPortaria}
+                  onNodeClick={(portariaId) => {
+                    const portaria = portarias.find((p) => p.id === portariaId)
+                    if (portaria) {
+                      setSelectedPortaria(portaria)
+                    }
+                  }}
+                />
               </div>
 
               <div className="detail-card">
@@ -285,10 +292,13 @@ function App() {
                     {[...(selectedPortaria.relacoes_saida ?? []), ...(selectedPortaria.relacoes_entrada ?? [])].map((relation) => (
                       <li key={`${relation.id}-${relation.portaria_destino_id}-${relation.portaria_origem_id}`}>
                         <span className="relation-badge" style={{ backgroundColor: relationColor[relation.tipo_relacao] }}>
-                          {relation.tipo_relacao}
-                        </span>
+                          {relation.tipo_relacao} | {relation.escopo ?? "sem escopo"}
+                        </span> 
                         <div>
-                          <strong>{relation.origem_titulo ?? "Portaria relacionada"}</strong>
+                          {(selectedPortaria.status == "ativa") ?
+                            (<strong>{relation.destino_titulo} ?? "Portaria relacionada"</strong>) :
+                            (<strong>{relation.origem_titulo} ??  "Portaria relacionada"</strong>)
+                          }
                           <p>{relation.descricao ?? "Sem descrição adicional."}</p>
                         </div>
                       </li>

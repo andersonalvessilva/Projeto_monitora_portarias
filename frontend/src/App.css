@@ -2,6 +2,8 @@
   min-height: 100vh;
   background: #f8fafc;
   color: #0f172a;
+  width: 95%;
+  margin: 0 auto;
 }
 
 .app-header {

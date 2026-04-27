@@ -50,7 +50,7 @@ async def list_portarias_endpoint(
         for relacao in portaria.relacoes_entrada:
             relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
         for relacao in portaria.relacoes_saida:
-            relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+            relacao.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
 
     return portarias
 
@@ -100,7 +100,7 @@ async def get_portaria_endpoint(
     
     # Populate origem_titulo on relacao instances
     for relacao in portaria.relacoes_saida:
-        relacao.origem_titulo = portaria.titulo
+        relacao.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
     for relacao in portaria.relacoes_entrada:
         relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
     

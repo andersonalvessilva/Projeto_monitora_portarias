@@ -31,16 +31,18 @@ export async function listPortarias(filters?: {
   year?: string
   status?: string
   limit?: number
+  skip?: number
 }): Promise<Portaria[]> {
   const url = buildUrl(API_PORTARIAS, {
     year: filters?.year,
     status: filters?.status,
-    limit: filters?.limit ?? 100,
+    skip: filters?.skip,
+    limit: filters?.limit ?? 20,
   })
   return request<Portaria[]>(url)
 }
 
-export async function searchPortarias(query: string, limit = 100): Promise<Portaria[]> {
-  const url = buildUrl(`${API_PORTARIAS}/search`, { q: query, limit })
+export async function searchPortarias(query: string, limit = 20, skip = 0): Promise<Portaria[]> {
+  const url = buildUrl(`${API_PORTARIAS}/search`, { q: query, limit, skip })
   return request<Portaria[]>(url)
 }

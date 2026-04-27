@@ -29,7 +29,9 @@ interface GraphBuilderResult {
 const relationColorMap: Record<string, string> = {
   complementa: '#22c55e',
   altera: '#f59e0b',
+  alterada: '#f59e0b',
   revoga: '#ef4444',
+  revogada: '#ef4444',
   regulamenta: '#3b82f6',
 }
 
@@ -63,7 +65,7 @@ function buildGraphData(selectedPortaria: Portaria | null): GraphBuilderResult {
     style: {
       padding: '16px',
       borderRadius: '12px',
-      border: '3px solid #0a4d24',
+      border: `3px solid ${relationColorMap[selectedPortaria.status] || '#20ad56'}`,
       background: 'white',
       fontSize: '14px',
       fontWeight: 'bold',
@@ -111,7 +113,7 @@ function buildGraphData(selectedPortaria: Portaria | null): GraphBuilderResult {
         target: centerNodeId,
         animated: true,
         style: {
-          stroke: relationColorMap[relacao.tipo_relacao] || '#999',
+          stroke: `${relationColorMap[relacao.tipo_relacao.toLowerCase()] || '#999'}`,
           strokeWidth: 2,
         },
         label: relacao.tipo_relacao,
@@ -165,7 +167,7 @@ function buildGraphData(selectedPortaria: Portaria | null): GraphBuilderResult {
         target: nodeId,
         animated: true,
         style: {
-          stroke: relationColorMap[relacao.tipo_relacao] || '#999',
+          stroke: `${relationColorMap[relacao.tipo_relacao.toLowerCase()] || '#999'}`,
           strokeWidth: 2,
         },
         label: relacao.tipo_relacao,
@@ -173,9 +175,8 @@ function buildGraphData(selectedPortaria: Portaria | null): GraphBuilderResult {
           fontSize: '11px',
           fontWeight: 'bold',
           fill: '#333',
-          background: 'white',
           padding: '2px 6px',
-          borderRadius: '3px',
+          borderRadius: '20px',
         },
       })
     })

@@ -34,33 +34,50 @@ function formatDate(value: string) {
   })
 }
 
+const ITEMS_PER_PAGE = 20
+
 function App() {
   const [portarias, setPortarias] = useState<Portaria[]>([])
+  const [totalCount, setTotalCount] = useState(0)
   const [selectedPortaria, setSelectedPortaria] = useState<Portaria | null>(null)
   const [search, setSearch] = useState("")
   const [year, setYear] = useState("")
   const [status, setStatus] = useState<PortariaStatus | "">("")
+  const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadPortarias()
+    loadPortarias({ page: 1 })
   }, [])
 
-  async function loadPortarias(params?: { search?: string; year?: string; status?: string }) {
+  async function loadPortarias(params?: { 
+    search?: string
+    year?: string
+    status?: string
+    page?: number
+  }) {
     setLoading(true)
     setError(null)
 
+    const page = params?.page ?? currentPage
+    const skip = (page - 1) * ITEMS_PER_PAGE
+
     try {
       const data = params?.search
-        ? await searchPortarias(params.search)
+        ? await searchPortarias(params.search, ITEMS_PER_PAGE, skip)
         : await listPortarias({
             year: params?.year,
             status: params?.status,
-            limit: 100,
+            skip,
+            limit: ITEMS_PER_PAGE,
           })
 
       setPortarias(data)
+      setCurrentPage(page)
+      // For now, estimate total count based on whether we got fewer items than requested
+      setTotalCount(data.length === ITEMS_PER_PAGE ? page * ITEMS_PER_PAGE + 1 : page * ITEMS_PER_PAGE - (ITEMS_PER_PAGE - data.length))
+      
       setSelectedPortaria((current) => {
         if (current) {
           const updated = data.find((item) => item.id === current.id)
@@ -111,6 +128,7 @@ function App() {
       <header className="app-header">
         <div>
           <p className="eyebrow">Monitora Portarias</p>
+          <img src="src/assets/logo.png" alt="Logo do Monitora Portarias" className="logo" />
           <h1 className="title">Dashboard inicial</h1>
           <p className="subtitle">
             Lista de portarias, filtros e painel de detalhes.
@@ -128,7 +146,7 @@ function App() {
           className="filter-grid"
           onSubmit={(event) => {
             event.preventDefault()
-            loadPortarias({ search, year, status })
+            loadPortarias({ search, year, status, page: 1 })
           }}
         >
           <label className="filter-field">
@@ -172,7 +190,7 @@ function App() {
                 setSearch("")
                 setYear("")
                 setStatus("")
-                loadPortarias()
+                loadPortarias({ page: 1 })
               }}
             >
               Limpar
@@ -196,24 +214,47 @@ function App() {
           {portarias.length === 0 ? (
             <div className="empty-state">Nenhuma portaria disponível para estes filtros.</div>
           ) : (
-            <div className="list-grid">
-              {portarias.map((portaria) => (
+            <>
+              <div className="list-grid">
+                {portarias.map((portaria) => (
+                  <button
+                    key={portaria.id}
+                    type="button"
+                    className={`list-card ${selectedPortaria?.id === portaria.id ? "active" : ""}`}
+                    onClick={() => setSelectedPortaria(portaria)}
+                  >
+                    <div className="card-title">
+                      <span>{portaria.ano}</span>
+                      <span className={`status-pill status-${portaria.status}`}>
+                        {statusLabel[portaria.status]}
+                      </span>
+                    </div>
+                    <p className="card-subtitle">{portaria.titulo.toUpperCase()}</p>
+                  </button>
+                ))}
+              </div>
+              <div className="pagination-controls">
                 <button
-                  key={portaria.id}
                   type="button"
-                  className={`list-card ${selectedPortaria?.id === portaria.id ? "active" : ""}`}
-                  onClick={() => setSelectedPortaria(portaria)}
+                  className="button button-secondary"
+                  disabled={currentPage === 1}
+                  onClick={() => loadPortarias({ search, year, status, page: currentPage - 1 })}
                 >
-                  <div className="card-title">
-                    <span>{portaria.ano}</span>
-                    <span className={`status-pill status-${portaria.status}`}>
-                      {statusLabel[portaria.status]}
-                    </span>
-                  </div>
-                  <p className="card-subtitle">{portaria.titulo.toUpperCase()}</p>
+                  ← Anterior
                 </button>
-              ))}
-            </div>
+                <span className="pagination-info">
+                  Página {currentPage}
+                </span>
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  disabled={portarias.length < ITEMS_PER_PAGE}
+                  onClick={() => loadPortarias({ search, year, status, page: currentPage + 1 })}
+                >
+                  Próxima →
+                </button>
+              </div>
+            </>
           )}
         </aside>
 
@@ -296,8 +337,8 @@ function App() {
                         </span> 
                         <div>
                           {(selectedPortaria.status == "ativa") ?
-                            (<strong>{relation.destino_titulo} ?? "Portaria relacionada"</strong>) :
-                            (<strong>{relation.origem_titulo} ??  "Portaria relacionada"</strong>)
+                            (<strong>{relation.destino_titulo}</strong>) :
+                            (<strong>{relation.origem_titulo}</strong>)
                           }
                           <p>{relation.descricao ?? "Sem descrição adicional."}</p>
                         </div>

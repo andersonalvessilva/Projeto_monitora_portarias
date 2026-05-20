@@ -26,8 +26,43 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <div className="login-screen-wrapper">
-      <div style={{ width: '100%', maxWidth: '460px' }}>
+    <div className="login-screen-wrapper" style={{ position: "relative", overflow: "hidden" }}>
+      
+      {/* NOVO FUNDO: Linhas de dados, malha e nós de monitoramento */}
+      <div 
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.15,
+          pointerEvents: "none",
+          zIndex: 0,
+          mixBlendMode: "overlay"
+        }}
+      >
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="login-grid" width="45" height="45" patternUnits="userSpaceOnUse">
+              <path d="M 45 0 L 0 0 0 45" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
+            </pattern>
+          </defs>
+          {/* Malha quadriculada de fundo */}
+          <rect width="100%" height="100%" fill="url(#login-grid)" />
+          
+          {/* Gráficos de linhas/ondas simulando fluxo de dados */}
+          <path d="M-50,250 Q150,120 450,380 T1000,180 T1600,450" fill="none" stroke="#22c55e" strokeWidth="1.5" />
+          <path d="M0,550 Q350,400 750,680 T1500,250" fill="none" stroke="#22c55e" strokeWidth="1" />
+          <path d="M100,150 Q500,320 850,150 T1700,350" fill="none" stroke="#16a34a" strokeWidth="0.8" opacity="0.5" />
+          
+          {/* Nós conectados do monitoramento (Pontos nas curvas) */}
+          <circle cx="450" cy="380" r="4.5" fill="#4ade80" />
+          <circle cx="1000" cy="180" r="3.5" fill="#4ade80" />
+          <circle cx="750" cy="680" r="4" fill="#4ade80" />
+          <circle cx="350" cy="400" r="3" fill="#22c55e" />
+        </svg>
+      </div>
+
+      {/* CONTEÚDO PRINCIPAL DO LOGIN (Z-INDEX GARANTE QUE FICA POR CIMA DO FUNDO) */}
+      <div style={{ width: '100%', maxWidth: '460px', position: 'relative', zIndex: 10 }}>
         
         {/* LOGO OFICIAL DO GOVERNO / SESA POSICIONADA ACIMA DO CARD */}
         <div className="login-external-logo">

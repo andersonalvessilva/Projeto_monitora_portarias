@@ -46,3 +46,12 @@ export async function searchPortarias(query: string, limit = 20, skip = 0): Prom
   const url = buildUrl(`${API_PORTARIAS}/search`, { q: query, limit, skip })
   return request<Portaria[]>(url)
 }
+
+// Adicione isso ao seu arquivo api.ts existente
+export async function fetchNotificacoes(): Promise<any[]> {
+  const response = await fetch("http://localhost:8000/api/notificacoes"); // Ajuste a URL/Porta do seu backend em Python se necessário
+  if (!response.ok) {
+    throw new Error("Erro ao buscar notificações");
+  }
+  return response.json();
+}

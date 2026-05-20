@@ -1,0 +1,186 @@
+/* ==========================================================================
+   LOGIN SESA - LAYOUT CORPORATIVO PREMIUM (FUNDO VERDE INTEGRAAL)
+   ========================================================================== */
+
+.login-screen-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #006b44; /* Verde SESA Puro como Background de Tela */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* Card de Login flutuante e limpo */
+.login-card-container {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 460px;
+  padding: 40px;
+  box-sizing: border-box;
+  transition: transform 0.3s ease;
+}
+
+/* Container da Logo SESA no topo, fora do card para simular o mockup */
+.login-external-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.login-external-logo img {
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+/* Cabeçalho Interno */
+.login-header-group {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-header-group h2 {
+  color: #1e293b;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.login-header-group h2 span {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.login-header-group p {
+  color: #64748b;
+  font-size: 13.5px;
+  margin: 0;
+}
+
+/* Estrutura de Formulário */
+.login-form-field {
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-form-field label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Wrapper para alinhar ícones internos */
+.login-input-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-icon-wrapper .field-icon {
+  position: absolute;
+  left: 16px;
+  color: #94a3b8;
+  transition: color 0.2s ease;
+  pointer-events: none;
+}
+
+.login-input-icon-wrapper input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  font-size: 14.5px;
+  color: #1e293b;
+  background-color: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Foco Estilo SESA */
+.login-input-icon-wrapper input:focus {
+  border-color: #006b44;
+  box-shadow: 0 0 0 4px rgba(0, 107, 68, 0.1);
+}
+
+.login-input-icon-wrapper input:focus + .field-icon {
+  color: #006b44;
+}
+
+/* Botão do Olho (Senha) */
+.btn-toggle-password {
+  position: absolute;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-toggle-password:hover {
+  color: #475569;
+}
+
+/* Checkbox */
+.login-remember-me-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-remember-me-row input[type="checkbox"] {
+  accent-color: #006b44;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.login-remember-me-row span {
+  color: #475569;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+/* Botão de Ação Principal */
+.btn-submit-auth {
+  width: 100%;
+  padding: 16px;
+  background-color: #006b44; /* Verde SESA */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 107, 68, 0.2);
+}
+
+.btn-submit-auth:hover {
+  background-color: #005234; /* Hover escurecido sutil */
+  box-shadow: 0 6px 12px -1px rgba(0, 107, 68, 0.3);
+}
+
+.btn-submit-auth:active {
+  transform: scale(0.99);
+}

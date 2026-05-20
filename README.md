@@ -1,217 +1,188 @@
-# Monitora Portarias - Guia de Desenvolvimento
+# 📑 Monitora Portarias
 
-## Visão Geral
+Sistema web desenvolvido para monitoramento, pesquisa e visualização de relações jurídicas entre portarias da Secretaria da Saúde.
 
-Sistema web para monitoramento e visualização de relações entre portarias do Ministério da Saúde.
+O projeto permite visualizar alterações, vínculos e histórico jurídico de portarias através de uma interface moderna, intuitiva e organizada em timeline.
 
-## Stack Tecnológico
+---
 
-- **Backend**: FastAPI + SQLAlchemy ORM
-- **Database**: 
-  - SQLite (desenvolvimento/MVP)
-  - PostgreSQL (produção)
-- **Validação**: Pydantic v2
-- **Async**: Python 3.8+
+# 🚀 Tecnologias Utilizadas
 
-## Instalação
+## Frontend
+- React
+- TypeScript
+- Vite
+- CSS3
 
-### 1. Clone o repositório
+## Backend
+- FastAPI
+- Python
+- SQLAlchemy
+
+## Banco de Dados
+- SQLite (desenvolvimento)
+- PostgreSQL (futuramente)
+
+---
+
+# ✨ Funcionalidades
+
+✅ Pesquisa de portarias  
+✅ Filtros avançados  
+✅ Visualização de relações jurídicas  
+✅ Timeline de alterações  
+✅ Interface moderna e responsiva  
+✅ Dashboard analítico  
+✅ Integração Frontend + Backend  
+✅ API REST com FastAPI  
+
+---
+
+# 🖥️ Preview do Sistema
+
+## Tela Principal
+
+<img width="100%" alt="preview sistema" src="./assets/preview1.png" />
+<img width="100%" alt="preview sistema" src="./assets/preview.png" />
+
+
+> Substitua futuramente pela imagem real do sistema.
+
+---
+
+# 📂 Estrutura do Projeto
+
 ```bash
-git clone <repo>
-cd MonitoraPortarias
+MonitoraPortarias/
+│
+├── backend/
+│   ├── app/
+│   ├── requirements.txt
+│   └── main.py
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── .gitignore
+├── README.md
+└── docker-compose.yml
 ```
 
-### 2. Crie um virtual environment
+---
+
+# ⚙️ Como Executar o Projeto
+
+## 🔹 Backend
+
+### 1. Acesse a pasta backend
+
+```bash
+cd backend
+```
+
+### 2. Crie o ambiente virtual
+
 ```bash
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate  # Windows
 ```
 
-### 3. Instale as dependências
+### 3. Ative o ambiente virtual
+
+#### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+#### Linux/Mac
+
+```bash
+source venv/bin/activate
+```
+
+### 4. Instale as dependências
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure o .env
+### 5. Execute o servidor
+
 ```bash
-cp .env.example .env
-# Edite .env conforme necessário (para dev, usar SQLite)
+uvicorn app.main:app --reload
 ```
 
-## Frontend
-O frontend está no diretório `frontend/frontend` e usa Vite + React + TypeScript.
+---
 
-### Executando o frontend
+## 🔹 Frontend
+
+### 1. Acesse a pasta frontend
+
 ```bash
-cd frontend/frontend
+cd frontend
+```
+
+### 2. Instale as dependências
+
+```bash
 npm install
+```
+
+### 3. Execute o projeto
+
+```bash
 npm run dev
 ```
 
-Se a API estiver rodando em outra porta, configure `VITE_API_BASE_URL` antes de iniciar:
-```bash
-export VITE_API_BASE_URL=http://localhost:8000
-npm run dev
+---
+
+# 🌐 Endpoints da API
+
+## Exemplos
+
+```http
+GET /portarias
 ```
 
-## Rodando a Aplicação
-
-### Development (SQLite)
-```bash
-# Na branch dev, com ENVIRONMENT=dev no .env
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```http
+GET /portarias/{id}
 ```
 
-A API estará disponível em `http://localhost:8000`
-
-Documentação interativa (Swagger): `http://localhost:8000/docs`
-ReDoc: `http://localhost:8000/redoc`
-
-### Produção (PostgreSQL)
-```bash
-# Na branch prod, com ENVIRONMENT=prod e DATABASE_URL do PostgreSQL no .env
-uvicorn main:app --host 0.0.0.0 --port 8000
+```http
+GET /relacoes
 ```
 
-## Estrutura do Projeto
+---
 
-```
-MonitoraPortarias/
-├── app/
-│   ├── __init__.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── models.py         # SQLAlchemy models (Portaria, Relacao, Artigo)
-│   ├── schemas/
-│   │   ├── __init__.py
-│   │   └── schemas.py        # Pydantic schemas (validação request/response)
-│   ├── crud/
-│   │   ├── __init__.py
-│   │   └── crud.py           # CRUD operations
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── portarias.py      # Endpoints para portarias
-│   │   ├── relacoes.py       # Endpoints para relações
-│   │   └── artigos.py        # Endpoints para artigos
-│   └── database.py           # Configuração SQLAlchemy
-├── main.py                    # FastAPI app entry point
-├── requirements.txt           # Dependências Python
-├── .env.example              # Exemplo de variáveis de ambiente
-├── .env                      # Variáveis de ambiente (dev)
-├── .gitignore
-└── SPECS.md                  # Especificações do projeto
-```
+# 🎯 Objetivo do Projeto
 
-## Endpoints da API (MVP)
+O objetivo do sistema é facilitar o acompanhamento e análise de portarias, permitindo uma visualização clara das relações jurídicas, alterações e impactos administrativos ao longo do tempo.
 
-### Portarias
-- `GET /api/v1/portarias` — Listar portarias com filtros
-- `GET /api/v1/portarias/{id}` — Detalhe de portaria
-- `GET /api/v1/portarias/search?q=termo` — Buscar por texto/número
-- `GET /api/v1/portarias/{id}/relacoes` — Relações de uma portaria
-- `POST /api/v1/portarias` — Criar portaria (autenticado, fase 2)
-- `PUT /api/v1/portarias/{id}` — Atualizar portaria (autenticado, fase 2)
-- `DELETE /api/v1/portarias/{id}` — Deletar portaria (autenticado, fase 2)
+---
 
-### Relações
-- `GET /api/v1/relacoes` — Listar relações
-- `POST /api/v1/relacoes` — Criar relação (autenticado, fase 2)
-- `DELETE /api/v1/relacoes/{id}` — Deletar relação (autenticado, fase 2)
+# 📈 Melhorias Futuras
 
-### Artigos
-- `GET /api/v1/artigos?portaria_id=x` — Listar artigos
-- `POST /api/v1/artigos` — Criar artigo (autenticado, fase 2)
-- `DELETE /api/v1/artigos/{id}` — Deletar artigo (autenticado, fase 2)
+- Autenticação de usuários
+- Dashboard com gráficos
+- Integração com PostgreSQL
+- Exportação de relatórios
+- Sistema de notificações
+- Deploy em nuvem
+- Dockerização completa
 
-## Modelo de Dados
+---
 
-### Portaria
-- `numero`: Número da portaria (obrigatório, > 0)
-- `ano`: Ano de publicação (obrigatório, >= 1900)
-- `titulo`: Título ou descrição resumida
-- `descricao_completa`: Descrição completa (opcional)
-- `data_publicacao`: Data de publicação
-- `link_externo`: URL para Diário Oficial (opcional)
-- `link_local`: Caminho do documento local (opcional)
-- `status`: ativa | revogada | alterada | regulamentada (default: ativa)
+# 👨‍💻 Autor
 
-### Relacao
-- `portaria_origem_id`: ID da portaria que origina a relação
-- `portaria_destino_id`: ID da portaria que é afetada
-- `tipo_relacao`: complementa | altera | revoga | regulamenta
-- `descricao`: Descrição da relação (opcional)
-- `escopo`: total | parcial (default: total)
+Desenvolvido por **Anderson Alves Silva**.
 
-### Artigo
-- `numero`: Número do artigo
-- `texto`: Texto do artigo (opcional)
-- `status`: valido | alterado | revogado (default: valido)
-- `portaria_id`: ID da portaria que contém o artigo
-- `observacoes`: Observações sobre o artigo (opcional)
+- GitHub: https://github.com/andersonalvessilva
 
-## Banco de Dados
+---
 
-### Development (SQLite)
-O banco é criado automaticamente em `./portarias.db` na primeira execução.
+# 📄 Licença
 
-```bash
-# Limpar banco (desenvolvimento)
-python -c "from app.database import drop_db; drop_db()"
-```
-
-### Produção (PostgreSQL)
-Configure `DATABASE_URL` com as credenciais do PostgreSQL:
-```
-DATABASE_URL=postgresql://username:password@localhost:5432/portarias_db
-```
-
-## Migrations (Fase 2)
-
-Usar Alembic para versionamento de schema:
-```bash
-alembic init alembic
-alembic revision --autogenerate -m "Initial schema"
-alembic upgrade head
-```
-
-## Autenticação (Fase 2)
-
-Endpoints de POST, PUT, DELETE serão protegidos com autenticação JWT.
-
-## Próximas Fases
-
-1. **Fase 2**:
-   - Autenticação JWT
-   - Autorização por roles
-   - CORS configurável
-   - Importação CSV/planilha
-
-2. **Fase 3**:
-   - Análise de impacto
-   - Histórico de versões
-   - Notificações
-   - Exportação de relatórios
-
-## Troubleshooting
-
-### Erro de importação `app.models`
-Verifique se `__init__.py` está em cada pasta do `app/`.
-
-### SQLite locked error
-Feche outras conexões ao banco. No dev, você pode apagar `portarias.db` e deixar recriado.
-
-### Port 8000 em uso
-Use outra porta:
-```bash
-uvicorn main:app --reload --port 8001
-```
-
-## Referências
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [SQLAlchemy Documentation](https://docs.sqlalchemy.org/)
-- [Pydantic Documentation](https://docs.pydantic.dev/)
-- [SPECS.md](SPECS.md) - Especificações detalhadas do projeto
-- [AGENTE_BACKEND.md](AGENTE_BACKEND.md) - Diretrizes arquiteturais
+Este projeto é destinado para fins de estudo, desenvolvimento e demonstração de portfólio.

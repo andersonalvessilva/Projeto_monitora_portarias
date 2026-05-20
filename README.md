@@ -43,7 +43,6 @@ O projeto permite visualizar alterações, vínculos e histórico jurídico de p
 ## Tela Principal
 
 <img width="100%" alt="preview sistema" src="./assets/preview1.png" />
-<img width="100%" alt="preview sistema" src="./assets/preview.png" />
 
 
 > Substitua futuramente pela imagem real do sistema.

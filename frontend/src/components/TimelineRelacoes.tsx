@@ -66,12 +66,13 @@ const TimelineRelacoes: React.FC<TimelineRelacoesProps> = ({ selectedPortaria, o
     // Formata o título da portaria para buscar a correspondência exata por string
     const termoBusca = slugRelacionado || selectedPortaria.titulo;
 
+    return selectedPortaria.link_externo
     // Injeta o parâmetro de data exata na URL de busca para matar os resultados de outros anos de vez
-    return `https://www.in.gov.br/consulta/-/buscar/dou` +
-           `?q=${encodeURIComponent(`"${termoBusca}"`)}` +
-           `&datapublicacao=${formatada}` + // Trava o motor de busca no dia exato do ato
-           `&secao=do1` + 
-           `&s=todos&exactDate=all&sortType=0`;
+    // return `https://www.in.gov.br/consulta/-/buscar/dou` +
+    //        `?q=${encodeURIComponent(`"${termoBusca}"`)}` +
+    //        `&datapublicacao=${formatada}` + // Trava o motor de busca no dia exato do ato
+    //        `&secao=do1` + 
+    //        `&s=todos&exactDate=all&sortType=0`;
   };
 
   const dataOriginal = selectedPortaria.data_publicacao;

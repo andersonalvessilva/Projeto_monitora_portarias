@@ -27,22 +27,13 @@ router = APIRouter(prefix="/api/v1/portarias", tags=["portarias"])
 @router.get("", response_model=List[PortariaResponse])
 async def list_portarias_endpoint(
     db: Session = Depends(get_db),
-    year: Optional[int] = Query(None, description="Filtro por ano de publicação"),
+    year: Optional[int] = Query(None, alias="ano", description="Filtro por ano de publicação"),
     status: Optional[str] = Query(None, description="Filtro por status"),
     skip: int = Query(0, ge=0, description="Número de registro a desconsiderar para paginação"),
     limit: int = Query(100, ge=1, le=1000, description="Número máximo de resultados"),
 ):
     """
     Lista todas as Portarias com filtros opcionais.
-    
-    Query Parameters:
-    - year: Filtra por ano de publicação
-    - status: Filtra por status (ativa, revogada, alterada, regulamentada)
-    - skip: Offset de paginação (default 0)
-    - limit: Limite de paginação (default 100, max 1000)
-    
-    Returns:
-        Lista de Portarias (summary fields only)
     """
     portarias = await list_portarias(db, year=year, status=status, skip=skip, limit=limit)
 
@@ -63,16 +54,16 @@ async def search_portarias_endpoint(
 ):
     """
     Pesquisa Portarias por número, ano ou título.
-    
-    Query Parameters:
-    - q: Search term (required)
-    - limit: Maximo de resultados a retornar (default 100)
-    
-    Returns:
-        List of matching Portarias
     """
-    
     portarias = await search_portarias(db, q, limit=limit)
+    
+    # 🎯 CORRIGIDO: Popula os títulos de entrada/saída na busca também, evitando campos vazios no front
+    for portaria in portarias:
+        for relacao in portaria.relacoes_entrada:
+            relacao.origem_titulo = relacao.portaria_origem.titulo if relacao.portaria_origem else None
+        for relacao in portaria.relacoes_saida:
+            relacao.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
+
     return portarias
 
 
@@ -83,22 +74,12 @@ async def get_portaria_endpoint(
 ):
     """
     Get Portaria by ID with full details and relationships.
-    
-    Path Parameters:
-    - portaria_id: Portaria ID
-    
-    Returns:
-        Portaria details
-        
-    Raises:
-        404: Portaria not found
     """
     portaria = await get_portaria(db, portaria_id)
     
     if not portaria:
         raise HTTPException(status_code=404, detail=f"Portaria {portaria_id} não encontrada")
     
-    # Populate origem_titulo on relacao instances
     for relacao in portaria.relacoes_saida:
         relacao.destino_titulo = relacao.portaria_destino.titulo if relacao.portaria_destino else None
     for relacao in portaria.relacoes_entrada:
@@ -115,18 +96,6 @@ async def get_portaria_relacoes(
 ):
     """
     Get relationships for an Portaria.
-    
-    Path Parameters:
-    - portaria_id: Portaria ID
-    
-    Query Parameters:
-    - direcao: "saida" (outgoing), "entrada" (incoming), or "both"
-    
-    Returns:
-        List of relationships
-        
-    Raises:
-        404: Portaria not found
     """
     portaria = await get_portaria(db, portaria_id)
     
@@ -144,23 +113,6 @@ async def create_portaria_endpoint(
 ):
     """
     Cria uma nova Portaria (autenticação - fase 2).
-    
-    Request Body:
-    - numero: Número da Portaria (positive integer)
-    - ano: Ano da publicação
-    - titulo: Titulo ou descrição curta
-    - data_publicacao: Data da publicação
-    - descricao_completa: Full description (opcional)
-    - link_externo: URL to Diário Oficial (opcional)
-    - link_local: Local document path (opcional)
-    - status: Status (default "ativa")
-    
-    Returns:
-        Portaria criada
-        
-    Raises:
-        400: Validation error
-        409:  with same numero+ano already exists
     """
     try:
         db_portaria = await create_portaria(db, portaria)
@@ -182,18 +134,6 @@ async def update_portaria_endpoint(
 ):
     """
     Atualizar uma Portaria (authenticated - phase 2).
-    
-    Path Parameters:
-    - portaria_id: Portaria ID to update
-    
-    Request Body:
-    - All fields are optional; only provided fields are updated
-    
-    Returns:
-        Updated Portaria
-        
-    Raises:
-        404: Portaria not found
     """
     db_portaria = await update_portaria(db, portaria_id, portaria_update)
     
@@ -210,12 +150,6 @@ async def delete_portaria_endpoint(
 ):
     """
     Excluir uma Portaria (authenticated - phase 2).
-    
-    Path Parameters:
-    - portaria_id: Portaria ID para excluir
-    
-    Raises:
-        404: Portaria não encontrada
     """
     success = await delete_portaria(db, portaria_id)
     

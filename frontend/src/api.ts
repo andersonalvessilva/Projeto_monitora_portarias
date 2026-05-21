@@ -47,11 +47,24 @@ export async function searchPortarias(query: string, limit = 20, skip = 0): Prom
   return request<Portaria[]>(url)
 }
 
-// Adicione isso ao seu arquivo api.ts existente
-export async function fetchNotificacoes(): Promise<any[]> {
-  const response = await fetch("http://localhost:8000/api/notificacoes"); // Ajuste a URL/Porta do seu backend em Python se necessário
-  if (!response.ok) {
-    throw new Error("Erro ao buscar notificações");
-  }
-  return response.json();
-}
+// // Adicione isso ao seu arquivo api.ts existente
+// export async function fetchNotificacoes(): Promise<any[]> {
+//   const response = await fetch("http://localhost:8000/api/notificacoes"); // Ajuste a URL/Porta do seu backend em Python se necessário
+//   if (!response.ok) {
+//     throw new Error("Erro ao buscar notificações");
+//   }
+//   return response.json();
+// }
+
+// Mude isso no seu api.ts para ficar padronizado:
+// export async function fetchNotificacoes(): Promise<any[]> {
+//   // Use a constante global para não quebrar quando mudar para o servidor real
+//   const url = `${API_BASE_URL}/api/v1/notificacoes`; 
+  
+//   const response = await fetch(url);
+//   if (!response.ok) {
+//     throw new Error("Erro ao buscar notificações");
+//   }
+//   return response.json();
+// }
+

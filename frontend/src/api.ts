@@ -1,66 +1,3 @@
-// import type { Portaria } from "./types"
-
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"
-// const API_PORTARIAS = `${API_BASE_URL}/api/v1/portarias`
-
-// function buildUrl(path: string, params?: Record<string, string | number | undefined>) {
-//   if (!params) {
-//     return path
-//   }
-
-//   const query = new URLSearchParams()
-//   Object.entries(params).forEach(([key, value]) => {
-//     // Evita enviar filtros vazios ou os textos de controle do front ("Todos...")
-//     if (
-//       value !== undefined && 
-//       value !== "" && 
-//       value !== "Todos os anos" && 
-//       value !== "Todos os status"
-//     ) {
-//       // Se for o status, garante que vai em minúsculo (ex: "ativa") para casar com o banco
-//       const safeValue = key === "status" ? String(value).toLowerCase() : String(value)
-//       query.append(key, safeValue)
-//     }
-//   })
-
-//   return query.toString().length ? `${path}?${query.toString()}` : path
-// }
-
-// async function request<T>(url: string): Promise<T> {
-//   const response = await fetch(url)
-//   if (!response.ok) {
-//     throw new Error(`Falha ao carregar dados: ${response.status} ${response.statusText}`)
-//   }
-
-//   return response.json() as Promise<T>
-// }
-
-// export async function listPortarias(filters?: {
-//   year?: string 
-//   status?: string
-//   limit?: number
-//   skip?: number
-// }): Promise<Portaria[]> {
-//   const url = buildUrl(API_PORTARIAS, {
-//     ano: filters?.year,     
-//     status: filters?.status,
-//     skip: filters?.skip,
-//     limit: filters?.limit ?? 20,
-//   })
-//   return request<Portaria[]>(url)
-// }
-
-// export async function searchPortarias(query: string, limit = 20, skip = 0): Promise<Portaria[]> {
-//   const url = buildUrl(`${API_PORTARIAS}/search`, { q: query, limit, skip })
-//   return request<Portaria[]>(url)
-// }
-
-// export async function fetchNotificacoes(): Promise<any[]> {
-//   const url = `${API_BASE_URL}/api/v1/notificacoes` 
-//   return request<any[]>(url)
-// }
-
-
 import type { Portaria, PortariaStatus } from "./types"
 
 // 🌐 URL Base do servidor FastAPI (ajuste a porta conforme seu ambiente local)
@@ -139,18 +76,36 @@ export async function searchPortarias(
 }
 
 /**
- * 🔒 Serviço de Autenticação - Emissão de Token JWT
+ * 🔒 Serviço de Autenticação - Emissão de Token JWT (FastAPI OAuth2)
  */
-export async function loginAuthentication(username: string, password: string): Promise<{ access_token: string; username: string }> {
+export async function loginAuthentication(
+  username: string, 
+  password: string
+): Promise<{ access_token: string; username: string }> {
+  
+  // 🚀 Correção para o FastAPI OAuth2 nativo: convertendo dados para Form Data
+  const formData = new URLSearchParams()
+  formData.append("username", username)
+  formData.append("password", password)
+
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
     method: "POST",
-    headers: getHeaders(true),
-    body: JSON.stringify({ username, password }),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...getHeaders(false) // Ignora o Content-Type JSON da função auxiliar
+    },
+    body: formData.toString(),
   })
 
   if (!response.ok) {
+    // Captura o objeto de erro padrão do FastAPI: { "detail": "Mensagem de erro" }
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.detail || "Credenciais inválidas para o painel SESA.")
+    
+    // Constrói um objeto de erro customizado contendo o status HTTP e a mensagem
+    throw {
+      status: response.status,
+      message: errorData.detail || "Credenciais inválidas para o painel SESA."
+    }
   }
 
   return response.json()

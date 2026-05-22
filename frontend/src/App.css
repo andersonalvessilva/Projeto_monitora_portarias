@@ -462,7 +462,11 @@ body {
   text-align: center;
 }
 
-.status-ativa { background: #035f3d; }
+.status-ativa {
+  background-color: #dcfce7;  /* Ou #16a34a (verde escuro) */
+  color: #15803d;/* Adicione a linha de borda sutil */
+  border: 1px solid #bbf7d0;
+} 
 .status-revogada { background: #dc2626; }
 .status-alterada { background: rgb(248, 140, 63); }
 .status-regulamentada { background: #2563eb; }

@@ -4,7 +4,7 @@ import type { Portaria, PortariaStatus } from "./types"
 import { PortariaGraph } from "./components/PortariaGraph"
 import TimelineRelacoes from "./components/TimelineRelacoes"
 import Login from "./pages/Login" 
-import { Search, ChevronLeft, ChevronRight, Filter, FileText, Network, LogOut } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Filter, FileText, Network, LogOut, AlertTriangle } from "lucide-react"
 import "./App.css"
 
 const statusLabel: Record<PortariaStatus, string> = {
@@ -37,7 +37,6 @@ const getStatusColors = (statusKey: string) => {
 
 function App() {
   // 🔒 FIXADO EM NULL: Força o app a iniciar sempre na tela de login para testes.
-  // Quando quiser voltar a lembrar o login, mude para: localStorage.getItem("@MonitoraPortarias:user")
   const [user, setUser] = useState<string | null>(null)
 
   // Estados de negócio do monitoramento
@@ -64,16 +63,21 @@ function App() {
     page?: number
   }) {
     setLoading(true)
-    setError(null)
+    setError(null) // 🔄 Reseta o erro a cada nova tentativa de carregamento
     const page = params?.page ?? currentPage
     const skip = (page - 1) * ITEMS_PER_PAGE
 
+    // Define quais filtros usar (se os novos do clique ou os que já estão no state)
+    const currentSearch = params?.hasOwnProperty('search') ? params.search : search
+    const currentYear = params?.hasOwnProperty('year') ? params.year : year
+    const currentStatus = params?.hasOwnProperty('status') ? params.status : status
+
     try {
-      const data = params?.search
-        ? await searchPortarias(params.search, ITEMS_PER_PAGE, skip)
+      const data = currentSearch
+        ? await searchPortarias(currentSearch, ITEMS_PER_PAGE, skip)
         : await listPortarias({
-            year: params?.year || year,
-            status: params?.status || status,
+            year: currentYear,
+            status: currentStatus,
             skip,
             limit: ITEMS_PER_PAGE,
           })
@@ -89,20 +93,27 @@ function App() {
         return data[0] ?? null
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar os dados das portarias.")
+      console.error(err)
+      // 🛡️ Define a mensagem amigável no estado
+      setError("Não foi possível conectar ao servidor de portarias. Verifique se o serviço está ativo ou tente novamente.")
       setPortarias([])
     } finally {
       setLoading(false)
     }
   }
 
-  // 🎯 GESTÃO DE LOGIN: Guarda usuário e salva no localStorage
+  // Atalho para o botão de re-tentativa usar o contexto atual de filtros
+  const handleRetry = () => {
+    loadPortarias({ page: currentPage })
+  }
+
+  // 🎯 GESTÃO DE LOGIN
   const handleLoginSuccess = (username: string) => {
     localStorage.setItem("@MonitoraPortarias:user", username);
     setUser(username);
   };
 
-  // 🎯 GESTÃO DE LOGOUT: Limpa tokens e estados de memória ao deslogar
+  // 🎯 GESTÃO DE LOGOUT
   const handleLogout = () => {
     localStorage.removeItem("@MonitoraPortarias:user");
     localStorage.removeItem("@MonitoraPortarias:token");
@@ -123,7 +134,7 @@ function App() {
 
   const totalRelations = (selectedPortaria?.relacoes_saida?.length ?? 0) + (selectedPortaria?.relacoes_entrada?.length ?? 0)
 
-  // 🔒 BLOQUEIO DE SEGURANÇA: Sem login ativo, renderiza a tela de login
+  // 🔒 BLOQUEIO DE SEGURANÇA
   if (!user) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
@@ -236,7 +247,7 @@ function App() {
               <button className="btn-apply-filters" onClick={() => loadPortarias({ year, status, page: 1 })}>
                 APLICAR FILTROS
               </button>
-              <button className="btn-clear-filters" onClick={() => { setSearch(""); setYear(""); setStatus(""); loadPortarias({ page: 1 }); }}>
+              <button className="btn-clear-filters" onClick={() => { setSearch(""); setYear(""); setStatus(""); loadPortarias({ search: "", year: "", status: "", page: 1 }); }}>
                 LIMPAR TUDO
               </button>
             </div>
@@ -249,69 +260,111 @@ function App() {
               {loading && <span className="loader-mini" style={{ fontSize: '12px', color: 'var(--sesa-green)' }}>Carregando...</span>}
             </div>
             
-            {error && <div style={{ color: '#ef4444', marginBottom: '15px', fontSize: '14px' }}>{error}</div>}
-
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Nº/Ano</th>
-                  <th>Título da Portaria</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {portarias.length > 0 ? (
-                  portarias.map((p) => (
-                    <tr 
-                      key={p.id} 
-                      className={selectedPortaria?.id === p.id ? "row-selected" : ""}
-                      onClick={() => setSelectedPortaria(p)}
-                    >
-                      <td className="col-numero">{p.numero}/{p.ano}</td>
-                      <td className="col-titulo">{p.titulo}</td>
-                      <td className="col-status">
-                        <span className={`status-pill status-${String(p.status).toLowerCase()}`}>
-                          {statusLabel[p.status as PortariaStatus] || p.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
-                      Nenhuma portaria encontrada para os critérios selecionados.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            
-            <div className="pagination-wrapper">
-              <button 
-                className="pagination-button"
-                disabled={currentPage === 1 || loading} 
-                onClick={() => loadPortarias({ page: currentPage - 1 })}
-              >
-                <ChevronLeft size={16} /> Anterior
-              </button>
-
-              <div className="pagination-current-info">
-                <span className="label">Página</span>
-                <span className="number"> {currentPage} </span>
+            {/* RENDERIZAÇÃO CONDICIONAL: ERRO VS CONTEÚDO */}
+            {error ? (
+              <div className="error-state-box" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '40px 20px',
+                textAlign: 'center',
+                backgroundColor: '#fff',
+                borderRadius: '12px',
+                border: '1px dashed #f59e0b',
+                marginBottom: '20px'
+              }}>
+                <div style={{ backgroundColor: '#fef3c7', padding: '12px', borderRadius: '50%', marginBottom: '14px' }}>
+                  <AlertTriangle size={28} color="#d97706" />
+                </div>
+                <h4 style={{ color: '#b45309', margin: '0 0 6px 0', fontWeight: 600, fontSize: '15px' }}>Conexão Indisponível</h4>
+                <p style={{ color: '#64748b', fontSize: '13px', maxWidth: '320px', margin: '0 0 16px 0', lineHeight: '1.5' }}>
+                  {error}
+                </p>
+                <button 
+                  onClick={handleRetry}
+                  style={{
+                    backgroundColor: '#15803d',
+                    color: '#fff',
+                    padding: '8px 22px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    fontWeight: 500,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#166534'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#15803d'}
+                >
+                  Tentar Novamente
+                </button>
               </div>
+            ) : (
+              <>
+                <table className="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Nº/Ano</th>
+                      <th>Título da Portaria</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {portarias.length > 0 ? (
+                      portarias.map((p) => (
+                        <tr 
+                          key={p.id} 
+                          className={selectedPortaria?.id === p.id ? "row-selected" : ""}
+                          onClick={() => setSelectedPortaria(p)}
+                        >
+                          <td className="col-numero">{p.numero}/{p.ano}</td>
+                          <td className="col-titulo">{p.titulo}</td>
+                          <td className="col-status">
+                            <span className={`status-pill status-${String(p.status).toLowerCase()}`}>
+                              {statusLabel[p.status as PortariaStatus] || p.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                          {loading ? "Buscando registros..." : "Nenhuma portaria encontrada para os critérios selecionados."}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+                
+                <div className="pagination-wrapper">
+                  <button 
+                    className="pagination-button"
+                    disabled={currentPage === 1 || loading} 
+                    onClick={() => loadPortarias({ page: currentPage - 1 })}
+                  >
+                    <ChevronLeft size={16} /> Anterior
+                  </button>
 
-              <button 
-                className="pagination-button"
-                disabled={portarias.length < ITEMS_PER_PAGE || loading}
-                onClick={() => loadPortarias({ page: currentPage + 1 })}
-              >
-                Próxima <ChevronRight size={16} />
-              </button>
-            </div>
+                  <div className="pagination-current-info">
+                    <span className="label">Página</span>
+                    <span className="number"> {currentPage} </span>
+                  </div>
+
+                  <button 
+                    className="pagination-button"
+                    disabled={portarias.length < ITEMS_PER_PAGE || loading}
+                    onClick={() => loadPortarias({ page: currentPage + 1 })}
+                  >
+                    Próxima <ChevronRight size={16} />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* COLUNA 3: DETALHES DA PORTARIA SELECIONADA */}
-          {selectedPortaria && (
+          {selectedPortaria && !error && (
             <div className="detail-panel">
               <div className="detail-header" style={{ textAlign: 'center' }}>
                 <span className="detail-eyebrow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--sesa-green)', fontWeight: 800, fontSize: '11px', letterSpacing: '1px' }}>
@@ -338,10 +391,21 @@ function App() {
               
               {/* SEÇÃO DO GRÁFICO */}
               <div className="graph-section">
-                <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '15px', textTransform: 'uppercase', fontSize: '11px', color: '#94a3b8', letterSpacing: '1px', fontWeight: 700 }}>
+                <h4 style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '6px', 
+                  marginBottom: '15px', 
+                  textTransform: 'uppercase', 
+                  fontSize: '11px', 
+                  color: '#94a3b8', 
+                  letterSpacing: '1px', 
+                  fontWeight: 700 
+                }}>
                   <Network size={16} /> Mapa Visual de Relações
                 </h4>
-                
+                  
                 {totalRelations > 0 ? (
                   <PortariaGraph 
                     selectedPortaria={selectedPortaria} 
@@ -370,7 +434,7 @@ function App() {
           )}
 
           {/* RODAPÉ INTEGRADO: HISTÓRICO JURÍDICO */}
-          {selectedPortaria && (
+          {selectedPortaria && !error && (
             <div className="timeline-section" style={{ gridColumn: '1 / -1', width: '100%', boxSizing: 'border-box', marginTop: '24px' }}>
               <div className="timeline-container-ajustado" style={{ backgroundColor: '#EFF6FF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
                 <div style={{ textAlign: 'center', marginBottom: '28px', width: '100%' }}>
